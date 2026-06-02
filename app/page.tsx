@@ -1,25 +1,31 @@
+import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { HeroTile } from "@/components/dashboard/HeroTile";
 import { StatsRow } from "@/components/dashboard/StatsRow";
 import { CourseGrid } from "@/components/dashboard/CourseGrid";
 import { ActivityTile } from "@/components/dashboard/ActivityTile";
+import { CourseGridSkeleton } from "@/components/ui/Skeleton";
 import { MOCK_USER, generateMockActivity } from "@/lib/mock-data";
 import { getCourses } from "@/lib/data/courses";
+
+// Separate async component so Suspense can stream it independently
+async function CoursesSection() {
+  const courses = await getCourses();
+  return <CourseGrid courses={courses} />;
+}
 
 /**
  * Dashboard page — async Server Component.
  *
  * Data flow:
- *   Courses → Supabase (server-only, via @supabase/ssr)
+ *   Courses → Supabase via a streaming Suspense boundary (CourseGridSkeleton
+ *             pulses while the fetch is in flight, then swaps in real data)
  *   User profile + activity → mock data until auth is wired up
  *
  * Nothing from the Supabase client or env vars is ever sent to the browser.
  */
-export default async function DashboardPage() {
-  const [courses, activity] = await Promise.all([
-    getCourses(),
-    Promise.resolve(generateMockActivity()),
-  ]);
+export default function DashboardPage() {
+  const activity = generateMockActivity();
 
   return (
     <DashboardShell user={MOCK_USER}>
@@ -32,8 +38,10 @@ export default async function DashboardPage() {
         {/* ── Quick stats ─────────────────────────────────────────── */}
         <StatsRow user={MOCK_USER} />
 
-        {/* ── Course grid (live from Supabase) ────────────────────── */}
-        <CourseGrid courses={courses} />
+        {/* ── Course grid — streams in after Supabase responds ────── */}
+        <Suspense fallback={<CourseGridSkeleton count={4} />}>
+          <CoursesSection />
+        </Suspense>
 
         {/* ── Activity heatmap ────────────────────────────────────── */}
         <ActivityTile activity={activity} />

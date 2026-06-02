@@ -17,12 +17,25 @@ const greeting = () => {
   return "Good evening";
 };
 
+const spring = (delay = 0) => ({
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 24,
+  delay,
+});
+
 /**
  * Large hero tile: personalised greeting, streak ring, motivational context.
  */
 export function HeroTile({ user }: HeroTileProps) {
   return (
-    <article className="mesh-bg glass-card relative overflow-hidden p-6 md:p-8 flex flex-col gap-6 min-h-[200px]">
+    <motion.article
+      className="mesh-bg glass-card relative overflow-hidden p-6 md:p-8 flex flex-col gap-6 min-h-[200px]"
+      initial={{ opacity: 0, y: 28 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={spring(0)}
+      whileHover={{ y: -2 }}
+    >
       {/* Decorative background orbs */}
       <div
         aria-hidden="true"
@@ -37,9 +50,9 @@ export function HeroTile({ user }: HeroTileProps) {
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={spring(0.08)}
           >
             <Badge variant="emerald" size="sm">
               <Sparkles size={10} />
@@ -49,9 +62,9 @@ export function HeroTile({ user }: HeroTileProps) {
 
           <motion.h1
             className="text-2xl font-bold leading-tight text-white sm:text-3xl"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.1 }}
+            transition={spring(0.14)}
           >
             Welcome back,{" "}
             <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
@@ -59,9 +72,9 @@ export function HeroTile({ user }: HeroTileProps) {
 
           <motion.p
             className="text-sm text-slate-400 max-w-sm"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={spring(0.2)}
           >
             You&apos;re on a{" "}
             <strong className="text-emerald-400">{user.streak_days}-day</strong>{" "}
@@ -82,24 +95,30 @@ export function HeroTile({ user }: HeroTileProps) {
       {/* CTA row */}
       <motion.footer
         className="flex items-center gap-3 flex-wrap"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.35 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={spring(0.28)}
       >
-        <button
+        <motion.button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-emerald-500/40 hover:scale-105 active:scale-100"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20"
+          whileHover={{ scale: 1.03, boxShadow: "0 8px 30px rgba(16,185,129,0.4)" }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 22 }}
         >
           Continue Learning
           <ChevronRight size={14} />
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-white/10 hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300"
+          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 22 }}
         >
           View Schedule
-        </button>
+        </motion.button>
       </motion.footer>
-    </article>
+    </motion.article>
   );
 }

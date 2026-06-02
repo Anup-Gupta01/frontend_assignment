@@ -115,12 +115,11 @@ body {
 }
 
 .glass-card-hover {
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .glass-card-hover:hover {
   border-color: rgba(16, 185, 129, 0.2);
   box-shadow: var(--glow-emerald);
-  transform: translateY(-2px);
 }
 
 /* Mesh gradient background for hero */
@@ -152,4 +151,15 @@ body {
 }
 .float {
   animation: float 4s ease-in-out infinite;
+}
+
+/* Reduce motion — respect user OS preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

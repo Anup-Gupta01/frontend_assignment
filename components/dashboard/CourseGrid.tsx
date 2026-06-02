@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { GraduationCap } from "lucide-react";
 import type { Course } from "@/types";
 import { CourseTile } from "./CourseTile";
@@ -6,9 +9,19 @@ interface CourseGridProps {
   courses: Course[];
 }
 
+const gridVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.07,
+      delayChildren: 0.18,
+    },
+  },
+};
+
 /**
  * Section wrapping the grid of CourseTile cards.
- * Data will be fetched from Supabase once env vars are configured.
+ * Parent variants drive the stagger; each CourseTile receives the child variant.
  */
 export function CourseGrid({ courses }: CourseGridProps) {
   return (
@@ -28,11 +41,16 @@ export function CourseGrid({ courses }: CourseGridProps) {
         </span>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <motion.div
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
+        variants={gridVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {courses.map((course, i) => (
           <CourseTile key={course.id} course={course} index={i} />
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

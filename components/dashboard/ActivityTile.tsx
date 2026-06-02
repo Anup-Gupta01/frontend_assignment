@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Activity } from "lucide-react";
 import type { ActivityDay } from "@/types";
 import { activityLevel } from "@/lib/utils";
@@ -82,9 +82,13 @@ export function ActivityTile({ activity }: ActivityTileProps) {
   const activeDays = activity.filter((d) => d.minutes_studied > 0).length;
 
   return (
-    <section
+    <motion.section
       aria-labelledby="activity-heading"
       className="glass-card relative overflow-hidden p-5 md:p-6"
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.22 }}
+      whileHover={{ y: -2 }}
     >
       {/* Subtle background gradient */}
       <div
@@ -175,16 +179,18 @@ export function ActivityTile({ activity }: ActivityTileProps) {
                           : "No data"
                       }
                       className={[
-                        "h-[10px] w-[10px] rounded-[2px] cursor-pointer transition-all duration-150",
+                        "h-[10px] w-[10px] rounded-[2px] cursor-pointer",
                         LEVEL_COLORS[level],
                         LEVEL_GLOW[level],
-                        "hover:ring-1 hover:ring-emerald-400/60 hover:scale-125",
                       ].join(" ")}
-                      initial={{ opacity: 0, scale: 0 }}
+                      initial={{ opacity: 0, scale: 0.4 }}
                       animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.35 }}
                       transition={{
-                        duration: 0.2,
-                        delay: (wi * DAYS_PER_WEEK + di) * 0.0008,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                        delay: (wi * DAYS_PER_WEEK + di) * 0.0006,
                       }}
                       onMouseEnter={(e) => {
                         if (!day.date) return;
@@ -218,27 +224,34 @@ export function ActivityTile({ activity }: ActivityTileProps) {
         <span className="text-[10px] text-slate-600">More</span>
       </footer>
 
-      {/* Tooltip — rendered at fixed position */}
-      {tooltip && (
-        <div
-          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full -mt-2 glass-card px-3 py-2 text-[11px] shadow-xl"
-          style={{ left: tooltip.x + 5, top: tooltip.y - 6 }}
-          role="tooltip"
-        >
-          <p className="font-semibold text-white">
-            {new Date(tooltip.date).toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })}
-          </p>
-          <p className="text-slate-400">
-            {tooltip.minutes > 0
-              ? `${tooltip.minutes} min studied`
-              : "No activity"}
-          </p>
-        </div>
-      )}
-    </section>
+      {/* Tooltip — AnimatePresence gives it a smooth fade+scale entrance */}
+      <AnimatePresence>
+        {tooltip && (
+          <motion.div
+            key="heatmap-tooltip"
+            className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full glass-card px-3 py-2 text-[11px] shadow-xl"
+            style={{ left: tooltip.x + 5, top: tooltip.y - 8 }}
+            role="tooltip"
+            initial={{ opacity: 0, scale: 0.88, y: 4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.88, y: 4 }}
+            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          >
+            <p className="font-semibold text-white">
+              {new Date(tooltip.date).toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
+            <p className="text-slate-400">
+              {tooltip.minutes > 0
+                ? `${tooltip.minutes} min studied`
+                : "No activity"}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.section>
   );
 }
