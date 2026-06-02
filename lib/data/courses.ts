@@ -5,8 +5,8 @@ import type { Course } from "@/types";
 
 /**
  * Raw shape returned by Supabase — maps 1-to-1 with the `courses` table.
- * Keeping this separate from the UI's `Course` interface makes it easy
- * to handle schema drift without touching component code.
+ * Keeping this separate from the UI's `Course` interface insulates component
+ * code from schema changes.
  */
 export interface CourseRow {
   id: string;
@@ -37,18 +37,25 @@ function rowToCourse(row: CourseRow): Course {
   };
 }
 
+// ── Result type ────────────────────────────────────────────────
+
+/**
+ * Typed fetch result — lets callers distinguish between "no data" and
+ * "fetch failed" without catching exceptions.
+ */
+export type CoursesResult =
+  | { ok: true;  courses: Course[] }
+  | { ok: false; message: string  };
+
 // ── Queries ───────────────────────────────────────────────────
 
 /**
- * Fetch all courses ordered by creation date, newest last.
+ * Fetch all courses ordered by creation date, ascending.
  *
- * This runs **only on the server** — the Supabase client created here uses
- * `@supabase/ssr`'s server helper, so no secrets ever leave the backend.
- *
- * Returns an empty array on error rather than throwing, so the page can
- * degrade gracefully (e.g. show an empty state) instead of crashing.
+ * Runs **server-only** — the Supabase client here uses `@supabase/ssr`'s
+ * server helper so credentials never leave the backend.
  */
-export async function getCourses(): Promise<Course[]> {
+export async function getCourses(): Promise<CoursesResult> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -58,10 +65,9 @@ export async function getCourses(): Promise<Course[]> {
     .returns<CourseRow[]>();
 
   if (error) {
-    // Log server-side so nothing leaks to the client bundle.
-    console.error("[getCourses] Supabase query failed:", error.message);
-    return [];
+    console.error("[getCourses] Supabase error:", error.message);
+    return { ok: false, message: error.message };
   }
 
-  return (data ?? []).map(rowToCourse);
+  return { ok: true, courses: (data ?? []).map(rowToCourse) };
 }
