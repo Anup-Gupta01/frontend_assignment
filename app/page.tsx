@@ -3,20 +3,23 @@ import { HeroTile } from "@/components/dashboard/HeroTile";
 import { StatsRow } from "@/components/dashboard/StatsRow";
 import { CourseGrid } from "@/components/dashboard/CourseGrid";
 import { ActivityTile } from "@/components/dashboard/ActivityTile";
-import { MOCK_USER, MOCK_COURSES, generateMockActivity } from "@/lib/mock-data";
+import { MOCK_USER, generateMockActivity } from "@/lib/mock-data";
+import { getCourses } from "@/lib/data/courses";
 
 /**
- * Dashboard page — Server Component.
+ * Dashboard page — async Server Component.
  *
  * Data flow:
- *   • Currently uses mock data so the UI works without a Supabase project.
- *   • When you're ready to wire up real data:
- *       1. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local
- *       2. Replace MOCK_COURSES with: const { data: courses } = await supabase.from("courses").select("*")
- *       3. Replace MOCK_USER with a real auth.getUser() call
+ *   Courses → Supabase (server-only, via @supabase/ssr)
+ *   User profile + activity → mock data until auth is wired up
+ *
+ * Nothing from the Supabase client or env vars is ever sent to the browser.
  */
-export default function DashboardPage() {
-  const activity = generateMockActivity();
+export default async function DashboardPage() {
+  const [courses, activity] = await Promise.all([
+    getCourses(),
+    Promise.resolve(generateMockActivity()),
+  ]);
 
   return (
     <DashboardShell user={MOCK_USER}>
@@ -29,8 +32,8 @@ export default function DashboardPage() {
         {/* ── Quick stats ─────────────────────────────────────────── */}
         <StatsRow user={MOCK_USER} />
 
-        {/* ── Course grid ─────────────────────────────────────────── */}
-        <CourseGrid courses={MOCK_COURSES} />
+        {/* ── Course grid (live from Supabase) ────────────────────── */}
+        <CourseGrid courses={courses} />
 
         {/* ── Activity heatmap ────────────────────────────────────── */}
         <ActivityTile activity={activity} />
