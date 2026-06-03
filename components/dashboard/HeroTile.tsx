@@ -1,118 +1,236 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, ChevronRight } from "lucide-react";
+import { Sparkles, ChevronRight, Zap, TrendingUp } from "lucide-react";
 import type { UserProfile } from "@/types";
 import { StreakRing } from "@/components/ui/StreakRing";
-import { Badge } from "@/components/ui/Badge";
 
 interface HeroTileProps {
   user: UserProfile;
 }
 
-const greeting = () => {
+function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 18) return "Good afternoon";
   return "Good evening";
-};
+}
 
 const spring = (delay = 0) => ({
   type: "spring" as const,
   stiffness: 300,
-  damping: 24,
+  damping: 26,
   delay,
 });
 
-/**
- * Large hero tile: personalised greeting, streak ring, motivational context.
- */
 export function HeroTile({ user }: HeroTileProps) {
+  const firstName = user.name.split(" ")[0];
+
   return (
     <motion.article
-      className="mesh-bg glass-card relative overflow-hidden p-6 md:p-8 flex flex-col gap-6 min-h-[200px]"
-      initial={{ opacity: 0, y: 28 }}
+      className="glass-card relative flex h-full min-h-[220px] flex-col justify-between gap-6 p-6 md:p-8"
+      style={{
+        /* mesh gradient background */
+        background: `
+          radial-gradient(ellipse 65% 55% at 10% 35%, rgba(20,184,166,0.07) 0%, transparent 60%),
+          radial-gradient(ellipse 40% 45% at 90% 70%, rgba(20,184,166,0.04) 0%, transparent 55%),
+          var(--bg-surface)
+        `,
+        overflow: "hidden",
+      }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={spring(0)}
       whileHover={{ y: -2 }}
+      aria-labelledby="hero-greeting"
     >
-      {/* Decorative background orbs */}
+      {/* Decorative orbs — contained within the card */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/8 blur-3xl"
+        style={{
+          position: "absolute",
+          right: -60,
+          top: -60,
+          width: 200,
+          height: 200,
+          borderRadius: "50%",
+          background: "rgba(20,184,166,0.12)",
+          filter: "blur(48px)",
+          pointerEvents: "none",
+        }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-cyan-500/6 blur-3xl"
+        style={{
+          position: "absolute",
+          bottom: -20,
+          left: "30%",
+          width: 180,
+          height: 120,
+          borderRadius: "50%",
+          background: "rgba(20,184,166,0.06)",
+          filter: "blur(40px)",
+          pointerEvents: "none",
+        }}
       />
 
-      {/* Top row: greeting + streak */}
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
+      {/* ── Top row: text + streak ring ── */}
+      <header className="relative flex items-start gap-4">
+        {/* Left: all the text */}
+        <div className="flex flex-col gap-3 flex-1 min-w-0">
+          {/* Greeting badge */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={spring(0.08)}
+            transition={spring(0.06)}
+            style={{ width: "fit-content" }}
           >
-            <Badge variant="emerald" size="sm">
-              <Sparkles size={10} />
-              {greeting()}
-            </Badge>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest"
+              style={{
+                background: "var(--accent-fill)",
+                border: "1px solid var(--accent-ring)",
+                color: "var(--accent-light)",
+              }}
+            >
+              <Sparkles size={9} aria-hidden="true" />
+              {getGreeting()}
+            </span>
           </motion.div>
 
+          {/* Heading */}
           <motion.h1
-            className="text-2xl font-bold leading-tight text-white sm:text-3xl"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={spring(0.14)}
-          >
-            Welcome back,{" "}
-            <span className="gradient-text">{user.name.split(" ")[0]}</span> 👋
-          </motion.h1>
-
-          <motion.p
-            className="text-sm text-slate-400 max-w-sm"
+            id="hero-greeting"
+            className="font-bold leading-tight tracking-tight"
+            style={{
+              fontSize: "clamp(22px, 3vw, 34px)",
+              color: "var(--text-1)",
+            }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={spring(0.2)}
+            transition={spring(0.1)}
+          >
+            Welcome back,{" "}
+            <span className="gradient-text">{firstName}</span>
+          </motion.h1>
+
+          {/* Subtext */}
+          <motion.p
+            className="text-[13px] leading-relaxed"
+            style={{ color: "var(--text-2)", maxWidth: 340 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={spring(0.16)}
           >
             You&apos;re on a{" "}
-            <strong className="text-emerald-400">{user.streak_days}-day</strong>{" "}
-            learning streak. Keep it going — you&apos;re in the top{" "}
-            <strong className="text-cyan-400">5%</strong> this week!
+            <strong style={{ color: "var(--accent-light)", fontWeight: 600 }}>
+              {user.streak_days}-day streak
+            </strong>
+            . Keep it up — you&apos;re in the{" "}
+            <strong style={{ color: "var(--accent-light)", fontWeight: 600 }}>
+              top 5%
+            </strong>{" "}
+            this week.
           </motion.p>
+
+          {/* Quick stats strip */}
+          <motion.div
+            className="flex items-center gap-3 flex-wrap"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={spring(0.22)}
+          >
+            <span
+              className="flex items-center gap-1.5 text-[11px]"
+              style={{ color: "var(--text-3)" }}
+            >
+              <TrendingUp size={11} style={{ color: "var(--accent)" }} />
+              <span className="font-mono" style={{ color: "var(--text-2)" }}>
+                {user.total_xp.toLocaleString()}
+              </span>
+              &nbsp;XP total
+            </span>
+            <span
+              style={{
+                height: 12,
+                width: 1,
+                background: "var(--border)",
+                display: "inline-block",
+              }}
+            />
+            <span
+              className="flex items-center gap-1.5 text-[11px]"
+              style={{ color: "var(--text-3)" }}
+            >
+              <Zap size={10} style={{ color: "var(--accent)" }} />
+              <span className="font-mono" style={{ color: "var(--text-2)" }}>
+                #{user.rank}
+              </span>
+              &nbsp;global rank
+            </span>
+          </motion.div>
         </div>
 
-        {/* Streak ring */}
-        <aside className="flex flex-col items-center gap-1 shrink-0">
+        {/* Right: streak ring — fixed size, won't squish */}
+        <motion.aside
+          className="shrink-0 flex flex-col items-center gap-2"
+          aria-label="Streak ring"
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={spring(0.14)}
+        >
           <StreakRing days={user.streak_days} size={88} />
-          <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">
-            Day streak
+          <span
+            className="text-[9px] font-semibold uppercase"
+            style={{
+              color: "var(--text-3)",
+              letterSpacing: "0.12em",
+            }}
+          >
+            day streak
           </span>
-        </aside>
+        </motion.aside>
       </header>
 
-      {/* CTA row */}
+      {/* ── CTA row ── */}
       <motion.footer
-        className="flex items-center gap-3 flex-wrap"
-        initial={{ opacity: 0, y: 8 }}
+        className="relative flex flex-wrap items-center gap-3"
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={spring(0.28)}
       >
         <motion.button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20"
-          whileHover={{ scale: 1.03, boxShadow: "0 8px 30px rgba(16,185,129,0.4)" }}
+          className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white"
+          style={{
+            background: "var(--accent)",
+            boxShadow: "0 4px 20px rgba(20,184,166,0.30)",
+          }}
+          whileHover={{
+            scale: 1.03,
+            boxShadow: "0 6px 28px rgba(20,184,166,0.45)",
+          }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: "spring", stiffness: 400, damping: 22 }}
         >
+          <Zap size={13} aria-hidden="true" />
           Continue Learning
-          <ChevronRight size={14} />
+          <ChevronRight size={13} aria-hidden="true" />
         </motion.button>
+
         <motion.button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300"
-          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
+          className="inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-[13px] font-medium"
+          style={{
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.04)",
+            color: "var(--text-2)",
+          }}
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: "rgba(255,255,255,0.08)",
+            color: "var(--text-1)",
+          }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: "spring", stiffness: 400, damping: 22 }}
         >

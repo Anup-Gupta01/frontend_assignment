@@ -40,25 +40,24 @@ const navContainerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.055,
-      delayChildren: 0.1,
+      staggerChildren: 0.05,
+      delayChildren: 0.08,
     },
   },
 };
 
 const navItemVariants: Variants = {
-  hidden: { opacity: 0, x: -12 },
+  hidden: { opacity: 0, x: -10 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { type: "spring" as const, stiffness: 320, damping: 26 },
+    transition: { type: "spring" as const, stiffness: 340, damping: 28 },
   },
 };
 
 /**
  * Desktop sidebar: collapsible, with nav items, user avatar, and logo.
- * Active state uses a shared `layoutId` background pill so switching pages
- * will animate the highlight smoothly across items.
+ * Active state uses a shared layoutId background pill for smooth transitions.
  */
 export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
   const firstName = user.name.split(" ")[0];
@@ -66,34 +65,34 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
 
   return (
     <motion.aside
-      animate={{ width: isCollapsed ? 64 : 220 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      animate={{ width: isCollapsed ? 60 : 212 }}
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
       className={cn(
         "hidden md:flex flex-col shrink-0",
-        "border-r border-white/6 bg-[var(--bg-surface)]",
+        "border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]",
         "relative h-screen sticky top-0 overflow-hidden"
       )}
       aria-label="Main navigation"
     >
       {/* Logo */}
-      <header className="flex h-16 items-center border-b border-white/6 px-4 shrink-0">
-        <div className="flex items-center gap-3 overflow-hidden">
+      <header className="flex h-14 items-center border-b border-[var(--border-subtle)] px-3.5 shrink-0">
+        <div className="flex items-center gap-2.5 overflow-hidden">
           <motion.div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/30"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-fill)] border border-[var(--accent-ring)]"
+            whileHover={{ scale: 1.08 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
           >
-            <Zap size={16} className="text-white" />
+            <Zap size={14} className="text-[var(--accent-light)]" />
           </motion.div>
           <AnimatePresence initial={false}>
             {!isCollapsed && (
               <motion.span
                 key="logo-text"
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="text-sm font-bold tracking-tight text-white whitespace-nowrap"
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+                className="text-[13px] font-bold tracking-tight text-[var(--text-1)] whitespace-nowrap"
               >
                 NexLearn
               </motion.span>
@@ -105,7 +104,7 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-hidden px-2 py-4" aria-label="Primary">
         <motion.ul
-          className="flex flex-col gap-1"
+          className="flex flex-col gap-0.5"
           role="list"
           variants={navContainerVariants}
           initial="hidden"
@@ -116,55 +115,54 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
               <a
                 href={href}
                 className={cn(
-                  "group relative flex items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium",
+                  "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium",
                   "transition-colors duration-150",
-                  active ? "text-emerald-400" : "text-slate-500 hover:text-slate-200"
+                  active
+                    ? "text-[var(--accent-light)]"
+                    : "text-[var(--text-3)] hover:text-[var(--text-2)]"
                 )}
                 aria-current={active ? "page" : undefined}
                 title={isCollapsed ? label : undefined}
               >
-                {/* Animated selection background — shared layoutId creates smooth movement */}
+                {/* Active background */}
                 {active && (
                   <motion.span
                     layoutId="sidebar-active-pill"
-                    className="absolute inset-0 rounded-lg bg-emerald-500/12 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.22)]"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    className="absolute inset-0 rounded-xl bg-[var(--accent-fill)] shadow-[inset_0_0_0_1px_var(--border-accent)]"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     aria-hidden="true"
                   />
                 )}
 
-                {/* Subtle hover bg for inactive items */}
+                {/* Hover bg for inactive items */}
                 {!active && (
-                  <motion.span
-                    className="absolute inset-0 rounded-lg bg-white/0 group-hover:bg-white/5"
-                    transition={{ duration: 0.15 }}
+                  <span
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-white/[0.04] transition-opacity duration-150"
                     aria-hidden="true"
                   />
                 )}
 
-                <motion.div
-                  whileHover={{ scale: 1.12 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                  className="relative shrink-0"
-                >
+                <div className="relative shrink-0">
                   <Icon
-                    size={18}
+                    size={16}
                     className={cn(
                       "transition-colors",
-                      active ? "text-emerald-400" : "text-slate-500 group-hover:text-slate-300"
+                      active
+                        ? "text-[var(--accent-light)]"
+                        : "text-[var(--text-3)] group-hover:text-[var(--text-2)]"
                     )}
                     aria-hidden="true"
                   />
-                </motion.div>
+                </div>
 
                 <AnimatePresence initial={false}>
                   {!isCollapsed && (
                     <motion.span
                       key={`label-${label}`}
-                      initial={{ opacity: 0, x: -8 }}
+                      initial={{ opacity: 0, x: -6 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -8 }}
-                      transition={{ duration: 0.16, ease: "easeOut" }}
+                      exit={{ opacity: 0, x: -6 }}
+                      transition={{ duration: 0.14, ease: "easeOut" }}
                       className="relative whitespace-nowrap"
                     >
                       {label}
@@ -178,16 +176,12 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User footer */}
-      <footer className="border-t border-white/6 p-3 shrink-0">
-        <div className="flex items-center gap-3 overflow-hidden">
+      <footer className="border-t border-[var(--border-subtle)] p-2.5 shrink-0">
+        <div className="flex items-center gap-2.5 overflow-hidden">
           {/* Avatar */}
-          <motion.div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/40 to-cyan-500/40 text-[12px] font-bold text-emerald-300 border border-emerald-500/30"
-            whileHover={{ scale: 1.08 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-overlay)] text-[11px] font-semibold text-[var(--accent-light)] border border-[var(--border)]">
             {initials}
-          </motion.div>
+          </div>
           <AnimatePresence initial={false}>
             {!isCollapsed && (
               <motion.div
@@ -198,10 +192,10 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
                 transition={{ duration: 0.16, ease: "easeOut" }}
                 className="flex-1 min-w-0"
               >
-                <p className="truncate text-[13px] font-medium text-white">
+                <p className="truncate text-[12px] font-semibold text-[var(--text-1)]">
                   {firstName}
                 </p>
-                <p className="truncate text-[10px] text-slate-500">
+                <p className="truncate text-[10px] text-[var(--text-3)]">
                   Student
                 </p>
               </motion.div>
@@ -210,13 +204,13 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
           {!isCollapsed && (
             <motion.button
               type="button"
-              className="text-slate-600 hover:text-slate-300 transition-colors"
+              className="text-[var(--text-4)] hover:text-[var(--text-2)] transition-colors"
               aria-label="Sign out"
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
-              <LogOut size={14} />
+              <LogOut size={13} />
             </motion.button>
           )}
         </div>
@@ -229,8 +223,8 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
         className={cn(
           "absolute top-1/2 -translate-y-1/2 -right-3 z-10",
           "flex h-6 w-6 items-center justify-center",
-          "rounded-full border border-white/10 bg-[var(--bg-elevated)]",
-          "text-slate-400 hover:text-white hover:border-emerald-500/40 transition-colors"
+          "rounded-full border border-[var(--border)] bg-[var(--bg-elevated)]",
+          "text-[var(--text-3)] hover:text-[var(--accent-light)] hover:border-[var(--border-accent)] transition-colors"
         )}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
@@ -238,7 +232,7 @@ export function Sidebar({ user, isCollapsed, onToggle }: SidebarProps) {
           animate={{ rotate: isCollapsed ? 0 : 180 }}
           transition={{ type: "spring", stiffness: 300, damping: 28 }}
         >
-          <ChevronRight size={12} />
+          <ChevronRight size={11} />
         </motion.div>
       </button>
     </motion.aside>

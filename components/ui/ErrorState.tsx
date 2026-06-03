@@ -25,27 +25,27 @@ export function ErrorState({
       aria-live="polite"
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 280, damping: 22 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
-        <AlertTriangle size={22} className="text-red-400" aria-hidden="true" />
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 border border-rose-500/20">
+        <AlertTriangle size={20} className="text-rose-400" aria-hidden="true" />
       </div>
 
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium text-slate-200">Something went wrong</p>
-        <p className="text-[12px] text-slate-500 max-w-xs">{message}</p>
+        <p className="text-[13px] font-medium text-[var(--text-1)]">Something went wrong</p>
+        <p className="text-[11px] text-[var(--text-3)] max-w-xs">{message}</p>
       </div>
 
       {onRetry && (
         <motion.button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white/[0.04] px-4 py-2 text-[12px] font-medium text-[var(--text-2)] hover:bg-white/[0.08] hover:text-[var(--text-1)] transition-colors"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: "spring", stiffness: 400, damping: 22 }}
         >
-          <RefreshCw size={12} aria-hidden="true" />
+          <RefreshCw size={11} aria-hidden="true" />
           Try again
         </motion.button>
       )}
@@ -59,11 +59,14 @@ export function ErrorState({
  */
 export function CoursesSectionError({ onRetry }: { onRetry?: () => void }) {
   return (
-    <section aria-labelledby="courses-error-heading">
-      <div className="mb-4">
+    <section
+      className="glass-card p-5 md:p-6"
+      aria-labelledby="courses-error-heading"
+    >
+      <div className="mb-5">
         <h2
           id="courses-error-heading"
-          className="text-sm font-semibold uppercase tracking-wider text-slate-400"
+          className="section-label"
         >
           My Courses
         </h2>

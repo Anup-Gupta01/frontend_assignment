@@ -22,33 +22,16 @@ import {
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import type { Course } from "@/types";
-import { Badge } from "@/components/ui/Badge";
 
 // ── Icon registry ─────────────────────────────────────────────
-//
-// Keys match the `icon_name` values stored in Supabase.
-// Unknown names fall back to BookOpen — nothing crashes.
 
 type IconComponent = React.ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
 
 const ICON_MAP: Record<string, IconComponent> = {
-  Brain,
-  Atom,
-  Cpu,
-  Network,
-  Calculator,
-  Code,
-  BookOpen,
-  FlaskConical,
-  Globe,
-  Layers,
-  Lightbulb,
-  Music,
-  Palette,
-  Sigma,
-  Terminal,
+  Brain, Atom, Cpu, Network, Calculator, Code, BookOpen,
+  FlaskConical, Globe, Layers, Lightbulb, Music, Palette, Sigma, Terminal,
 };
 
 function resolveIcon(name: string): IconComponent {
@@ -58,34 +41,30 @@ function resolveIcon(name: string): IconComponent {
 // ── Animation variants ────────────────────────────────────────
 
 const tileVariants: Variants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring" as const, stiffness: 300, damping: 20 },
+    transition: { type: "spring" as const, stiffness: 300, damping: 26 },
   },
 };
 
-// ── Sub-components ────────────────────────────────────────────
+// ── Progress bar ──────────────────────────────────────────────
 
 interface ProgressBarProps {
-  value: number;   // 0–100
-  color: string;
+  value: number;
   delay: number;
 }
 
-/**
- * Animated progress bar — springs from 0 to `value` the first time
- * the element enters the viewport (useful when the grid is scrolled into view).
- */
-function ProgressBar({ value, color, delay }: ProgressBarProps) {
+function ProgressBar({ value, delay }: ProgressBarProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
 
   return (
     <div
       ref={ref}
-      className="h-1.5 w-full overflow-hidden rounded-full bg-white/8"
+      className="h-[3px] w-full overflow-hidden rounded-full"
+      style={{ background: "rgba(255,255,255,0.06)" }}
       role="progressbar"
       aria-valuenow={value}
       aria-valuemin={0}
@@ -93,18 +72,14 @@ function ProgressBar({ value, color, delay }: ProgressBarProps) {
       aria-label={`${value}% complete`}
     >
       <motion.div
-        className="h-full rounded-full will-change-transform"
+        className="h-full rounded-full"
         style={{
-          background: `linear-gradient(90deg, ${color}80, ${color})`,
+          background:
+            "linear-gradient(90deg, var(--accent-dim), var(--accent-light))",
         }}
         initial={{ width: 0 }}
         animate={inView ? { width: `${value}%` } : { width: 0 }}
-        transition={{
-          type: "spring",
-          stiffness: 70,
-          damping: 18,
-          delay,
-        }}
+        transition={{ type: "spring", stiffness: 60, damping: 18, delay }}
       />
     </div>
   );
@@ -117,90 +92,103 @@ interface CourseTileProps {
   index: number;
 }
 
-/**
- * Individual course card with:
- * - Dynamic icon resolved from `course.icon` (falls back to BookOpen)
- * - Abstract grain texture pseudo-element for depth
- * - Animated progress bar driven by viewport entry
- * - Per-card accent glow on hover derived from `course.color`
- */
 export function CourseTile({ course, index }: CourseTileProps) {
   const Icon = resolveIcon(course.icon);
-  const pct  = Math.round(course.progress);
+  const pct = Math.round(course.progress);
   const done = course.completed_lessons;
   const total = course.total_lessons;
   const remaining = total - done;
-
-  // Stagger delay: each card is slightly later than the previous
-  const progressDelay = index * 0.06 + 0.2;
+  const progressDelay = index * 0.05 + 0.15;
 
   return (
     <motion.article
-      className="card-grain glass-card relative flex flex-col gap-4 p-5 cursor-pointer overflow-hidden"
+      className="glass-card relative flex flex-col p-5 cursor-pointer"
+      style={{ overflow: "visible" }}
       variants={tileVariants}
       whileHover={{
-        y: -4,
-        boxShadow: `0 16px 48px ${course.color}25, 0 0 0 1px ${course.color}30`,
+        y: -3,
+        boxShadow:
+          "0 12px 40px rgba(20,184,166,0.13), 0 0 0 1px rgba(20,184,166,0.22)",
+        borderColor: "rgba(20,184,166,0.22)",
       }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
       aria-label={`${course.title} — ${pct}% complete`}
     >
-      {/*
-       * Abstract radial mesh — a soft orb in the top-right corner using the
-       * card's accent colour. Pure CSS, no external assets.
-       */}
+      {/* Subtle teal orb behind the card — won't clip */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl"
-        style={{ background: `${course.color}14` }}
+        className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full blur-2xl"
+        style={{
+          background: "var(--accent-glow)",
+          opacity: 0.5,
+          zIndex: -1,
+        }}
       />
 
-      {/* ── Header: icon + category ── */}
-      <header className="relative flex items-start justify-between gap-3">
-        <motion.div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+      {/* ── Header: icon + category badge ── */}
+      <header className="flex items-center justify-between gap-2 mb-4">
+        {/* Icon */}
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
           style={{
-            background: `${course.color}18`,
-            border: `1px solid ${course.color}35`,
+            background: "var(--accent-fill)",
+            border: "1px solid var(--accent-ring)",
           }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 420, damping: 18 }}
         >
-          <Icon size={18} style={{ color: course.color }} aria-hidden="true" />
-        </motion.div>
+          <Icon
+            size={16}
+            style={{ color: "var(--accent-light)" }}
+            aria-hidden="true"
+          />
+        </div>
 
-        <Badge variant="muted" size="sm">
+        {/* Category — truncates if too long */}
+        <span
+          className="min-w-0 truncate rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            color: "var(--text-3)",
+            maxWidth: "calc(100% - 48px)",
+          }}
+          title={course.category}
+        >
           {course.category}
-        </Badge>
+        </span>
       </header>
 
       {/* ── Title + instructor ── */}
-      <div className="relative flex flex-col gap-1">
-        <h3 className="text-sm font-semibold leading-snug text-white line-clamp-2">
+      <div className="flex flex-col gap-1 flex-1 mb-4">
+        <h3
+          className="text-[13px] font-semibold leading-snug line-clamp-2"
+          style={{ color: "var(--text-1)" }}
+        >
           {course.title}
         </h3>
-        <p className="text-[12px] text-slate-500">{course.instructor}</p>
+        <p className="text-[11px] truncate" style={{ color: "var(--text-3)" }}>
+          {course.instructor}
+        </p>
       </div>
 
       {/* ── Progress section ── */}
-      <footer className="relative mt-auto flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-slate-500">
+      <footer className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px]" style={{ color: "var(--text-3)" }}>
             {done}/{total} lessons
           </span>
           <span
-            className="font-mono text-[13px] font-bold"
-            style={{ color: course.color }}
+            className="font-mono text-[12px] font-bold shrink-0"
+            style={{ color: "var(--accent-light)" }}
           >
             {pct}%
           </span>
         </div>
 
-        <ProgressBar value={pct} color={course.color} delay={progressDelay} />
+        <ProgressBar value={pct} delay={progressDelay} />
 
         {remaining > 0 && (
-          <p className="text-[10px] text-slate-600">
+          <p className="text-[10px]" style={{ color: "var(--text-4)" }}>
             {remaining} lesson{remaining !== 1 ? "s" : ""} remaining
           </p>
         )}

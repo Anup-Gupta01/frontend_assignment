@@ -1,63 +1,106 @@
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { HeroTile } from "@/components/dashboard/HeroTile";
-import { StatsRow } from "@/components/dashboard/StatsRow";
+import { StatCard } from "@/components/dashboard/StatCard";
 import { CourseGrid } from "@/components/dashboard/CourseGrid";
 import { ActivityTile } from "@/components/dashboard/ActivityTile";
 import { CourseGridSkeleton } from "@/components/ui/Skeleton";
 import { CoursesSectionError } from "@/components/ui/ErrorState";
 import { MOCK_USER, generateMockActivity } from "@/lib/mock-data";
 import { getCourses } from "@/lib/data/courses";
+import { formatNumber } from "@/lib/utils";
 
-/**
- * Async Server Component that fetches and renders the courses section.
- * Lives in its own component so Suspense can stream it without blocking
- * the rest of the page (hero, stats, activity render immediately).
- */
+// ── Async island: only this waits on Supabase ─────────────────
 async function CoursesSection() {
   const result = await getCourses();
-
-  if (!result.ok) {
-    // Supabase returned an error — show the error UI instead of crashing
-    return <CoursesSectionError />;
-  }
-
+  if (!result.ok) return <CoursesSectionError />;
   return <CourseGrid courses={result.courses} />;
 }
 
 /**
  * Dashboard page — Server Component.
  *
- * Data flow:
- *   Courses     → Supabase (server-only, @supabase/ssr, streamed via Suspense)
- *   User + activity → mock data until auth is wired up
+ * Layout: Bento Grid
+ *   ┌──────────────────────────┬───────────┐
+ *   │  Hero (8 cols)           │  XP       │
+ *   │                          │  Hours    │
+ *   │                          │  Rank     │
+ *   ├──────────────────────────┴───────────┤
+ *   │  Course Grid (12 cols, 3-up)         │
+ *   ├──────────────────────────────────────┤
+ *   │  Activity Heatmap (12 cols)          │
+ *   └──────────────────────────────────────┘
  *
- * Nothing from the Supabase client or env vars is sent to the browser.
+ * Data flow:
+ *   Courses → Supabase server-side, streamed via Suspense
+ *   Everything else → mock data (no async blocking)
  */
 export default function DashboardPage() {
   const activity = generateMockActivity();
+  const user = MOCK_USER;
+
+  const stats = [
+    {
+      label: "Total XP",
+      value: formatNumber(user.total_xp),
+      sub: "+820 this week",
+      trend: "up" as const,
+      color: "#14b8a6",
+    },
+    {
+      label: "Hours Studied",
+      value: String(user.hours_studied),
+      sub: "+12.5 this week",
+      trend: "up" as const,
+      color: "#14b8a6",
+    },
+    {
+      label: "Global Rank",
+      value: `#${user.rank}`,
+      sub: "↑ 3 positions",
+      trend: "up" as const,
+      color: "#14b8a6",
+    },
+  ] as const;
 
   return (
-    <DashboardShell user={MOCK_USER}>
-      <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 lg:p-8">
+    <DashboardShell user={user}>
+      {/*
+       * max-w-screen-2xl keeps the grid from stretching too wide on 4K screens.
+       * padding is uniform so the bento tiles never touch the viewport edge.
+       */}
+      <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 md:px-6 md:py-8">
+        <div className="bento-grid">
 
-        {/* Hero — renders immediately, no async dependency */}
-        <HeroTile user={MOCK_USER} />
+          {/* ── Hero tile — spans 8 of 12 cols on desktop ── */}
+          <div className="bento-hero">
+            <HeroTile user={user} />
+          </div>
 
-        {/* Quick stats — same */}
-        <StatsRow user={MOCK_USER} />
+          {/*
+           * ── Stats column — 3 stacked cards, right column on desktop
+           * bento-stats-col sets display:flex flex-col at ≥1024px
+           * bento-stat is the span-4 fallback on mobile/tablet
+           */}
+          <div className="bento-stats-col bento-stat" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {stats.map((s, i) => (
+              <StatCard key={s.label} {...s} index={i} />
+            ))}
+          </div>
 
-        {/*
-         * Course grid — streams in once Supabase responds.
-         * The skeleton pulses until data (or an error) arrives.
-         */}
-        <Suspense fallback={<CourseGridSkeleton count={4} />}>
-          <CoursesSection />
-        </Suspense>
+          {/* ── Course grid — Supabase data streamed in via Suspense ── */}
+          <div className="bento-courses">
+            <Suspense fallback={<CourseGridSkeleton count={4} />}>
+              <CoursesSection />
+            </Suspense>
+          </div>
 
-        {/* Activity heatmap — generated from mock data, instant */}
-        <ActivityTile activity={activity} />
+          {/* ── Activity heatmap — mock data, renders immediately ── */}
+          <div className="bento-activity">
+            <ActivityTile activity={activity} />
+          </div>
 
+        </div>
       </div>
     </DashboardShell>
   );
