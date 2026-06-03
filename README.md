@@ -1,244 +1,238 @@
 # NexLearn — Student Dashboard
 
-A **dark-mode Bento Grid** learning dashboard built with Next.js 16 App Router, Supabase, Framer Motion, and Tailwind CSS v4. Designed as a frontend internship submission.
+A futuristic dark-mode student dashboard built with **Next.js 16 App Router**, **React 19**, **Supabase**, and **Framer Motion**. The UI follows a bento-grid layout and streams real course data from a Postgres database while keeping everything else instantly available via mock data.
 
 ---
 
-## Live demo
-
-> Add your Vercel deployment URL here after deploying.
-
----
-
-## Tech stack
-
-| Layer | Choice |
-|---|---|
-| Framework | Next.js 16 (App Router, RSC, Streaming) |
-| Database | Supabase (PostgreSQL + RLS) |
-| Auth client | `@supabase/ssr` — server-side cookie handling |
-| Styling | Tailwind CSS v4 + vanilla CSS custom properties |
-| Animation | Framer Motion — spring physics, variants, layoutId |
-| Language | TypeScript (strict) |
-| Icons | Lucide React (tree-shakeable) |
-| Fonts | Inter (UI) + JetBrains Mono (numbers) via Google Fonts |
-
----
-
-## Bento Grid layout
-
-The dashboard uses a **12-column CSS Grid** (no JavaScript layout engine). Each section is a named Bento cell:
-
-```
-Desktop (≥ 1024px):
-┌─────────────────────────────────┬──────────────┐
-│  Hero tile           (8 cols)   │  XP          │  ← row 1
-│  Greeting + Streak ring + CTAs  │  Hours       │
-│                                 │  Rank        │
-├─────────────────────────────────┴──────────────┤
-│  Course Grid                    (12 cols)       │  ← row 2
-│  3-column sub-grid of CourseTiles               │
-├──────────────────────────────────────────────── ┤
-│  Activity Heatmap               (12 cols)       │  ← row 3
-└─────────────────────────────────────────────────┘
-
-Tablet (640–1023px): 2-col stats, single-col hero/courses/activity
-Mobile (<640px):     single column, tiles stack
-```
-
-Grid classes are in `app/globals.css` — no JS involved, so there are **zero layout shifts**.
-
----
-
-## Architecture
-
-### Server / Client split
-
-| File | Boundary | Reason |
-|---|---|---|
-| `app/page.tsx` | Server | Composes the page; CoursesSection is async |
-| `app/layout.tsx` | Server | Static metadata + HTML shell |
-| `app/loading.tsx` | Server | Framework-rendered skeleton |
-| `app/error.tsx` | **Client** | Next.js requires error boundaries to be client |
-| `lib/data/courses.ts` | Server | All DB queries — credentials never leave backend |
-| `lib/supabase/server.ts` | Server | `@supabase/ssr` server client |
-| All `components/` | **Client** | Receive typed props; own all animation logic |
-
-### Data flow
-
-```
-Supabase DB
-    │
-    ▼
-getCourses()           ← lib/data/courses.ts  (server-only)
-    │ CoursesResult { ok, courses } | { ok: false, message }
-    ▼
-CoursesSection         ← async RSC in page.tsx
-    │ courses: Course[]
-    ▼
-<CourseGrid>           ← client component, receives plain data
-    │
-    ▼
-<CourseTile>           ← animates, useInView for progress bar
-```
-
-Supabase credentials (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) are read by `createServerClient` on the server. They never appear in the browser bundle.
-
-### Error handling
-
-`getCourses()` returns a discriminated union:
-
-```typescript
-type CoursesResult =
-  | { ok: true;  courses: Course[] }
-  | { ok: false; message: string  };
-```
-
-- **Supabase error** → `<CoursesSectionError />` (graceful degradation, not a crash)
-- **Empty table** → `<EmptyState />` inside `CourseGrid`
-- **Unhandled throw** → `app/error.tsx` catches it, shows retry button
-
----
-
-## Project structure
-
-```
-app/
-  layout.tsx            Root layout (dark-mode locked, metadata)
-  page.tsx              Dashboard page — Bento Grid composition
-  loading.tsx           Route skeleton (mirrors bento layout)
-  error.tsx             Route error boundary
-  globals.css           Design tokens + bento-grid + glass-card
-
-components/
-  layout/
-    DashboardShell      Sidebar + main content wrapper
-    Sidebar             Desktop collapsible nav (layoutId animation)
-    BottomNav           Mobile bottom bar (layoutId animation)
-  dashboard/
-    HeroTile            Left 8-col Bento hero
-    StatCard            Individual stat (XP / Hours / Rank)
-    CourseGrid          12-col Bento tile wrapping 3-col sub-grid
-    CourseTile          Dynamic icon, grain texture, spring progress bar
-    ActivityTile        GitHub-style heatmap (AnimatePresence tooltip)
-  ui/
-    Badge               Colour-variant pill
-    Skeleton + CourseGridSkeleton
-    ErrorState + CoursesSectionError
-    GlowCard
-    StreakRing          Animated SVG arc
-
-lib/
-  data/courses.ts       Server-only data layer
-  supabase/client.ts    Browser client (@supabase/ssr)
-  supabase/server.ts    Server client (@supabase/ssr)
-  mock-data.ts          User + activity until auth is connected
-  utils.ts              cn, formatNumber, daysAgo, activityLevel
-
-types/index.ts          Course, UserProfile, ActivityDay, StatCard
-supabase/migrations/    SQL to create and seed the courses table
-```
-
----
-
-## Supabase setup
-
-### 1. Create a project
-
-[supabase.com](https://supabase.com) → New project.
-
-### 2. Run the migration
-
-**SQL Editor → New query** → paste `supabase/migrations/20260602_create_courses.sql` → Run.
-
-Creates the `courses` table with RLS enabled and inserts 4 seed rows.
-
-### 3. Configure environment variables
+## Quick Start
 
 ```bash
-cp .env.example .env.local
-# fill in your project URL and anon key
+# 1. Install dependencies
+npm install
+
+# 2. Copy the env template and fill in your Supabase credentials
+cp .env.local.example .env.local   # set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# 3. Run the migration against your Supabase project
+# Paste supabase/migrations/20260602_create_courses.sql into the Supabase SQL Editor
+
+# 4. Start the dev server
+npm run dev
 ```
 
-Find both at **Settings → API** in the Supabase dashboard.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 4. Schema
+---
+
+## Tech Stack
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Framework | Next.js 16 (App Router) | RSC + streaming Suspense out of the box |
+| Language | TypeScript 5 | Full-stack type safety |
+| Database | Supabase (Postgres) | Real-time capable, free tier, SSR-friendly SDK |
+| Styling | Tailwind CSS v4 + vanilla CSS | Utility classes for layout, custom CSS for design tokens & animations |
+| Animation | Framer Motion | Declarative spring animations with SSR-safe motion |
+| Icons | Lucide React | Tree-shakeable, consistent icon set |
+| Utilities | clsx + tailwind-merge | Conditional class composition without duplication |
+
+---
+
+## Architectural Choices
+
+### Bento Grid Layout
+
+The main dashboard is structured as a 12-column CSS grid (`bento-grid` in `globals.css`). Each tile occupies a named area:
+
+```
+┌──────────────────────────┬────────────┐
+│  HeroTile   (8 cols)     │ Stats col  │
+│                          │ (4 cols,   │
+│                          │ 3 cards)   │
+├──────────────────────────┴────────────┤
+│  CourseGrid              (12 cols)    │
+├───────────────────────────────────────┤
+│  ActivityTile heatmap    (12 cols)    │
+└───────────────────────────────────────┘
+```
+
+Grid areas collapse to a single column on mobile. The sidebar is replaced by a bottom navigation bar (`BottomNav`) at `< md` breakpoints so the full viewport is available for content.
+
+### Data Flow — Two-tier Strategy
+
+The dashboard deliberately uses two data sources to show both static and dynamic patterns:
+
+| Tile | Source | Why |
+|---|---|---|
+| HeroTile, Stats, Activity | `lib/mock-data.ts` | Instantly available, zero latency, no auth required |
+| CourseGrid | Supabase `courses` table | Demonstrates real async data fetching via RSC |
+
+The `getCourses()` function in `lib/data/courses.ts` wraps the Supabase query in a **tagged union result type** (`{ ok: true; courses } | { ok: false; message }`). This keeps error handling explicit without `try/catch` at the call site, and surfaces a graceful `CoursesSectionError` fallback instead of crashing the page.
+
+---
+
+## Server / Client Component Split
+
+Next.js App Router defaults every component to a **Server Component (RSC)**. The split decision was made by asking: *"Does this component need the browser?"*
+
+### Server Components (no `"use client"`)
+
+| File | Reason |
+|---|---|
+| `app/page.tsx` | Orchestrates layout; calls `getCourses()` on the server |
+| `app/layout.tsx` | Static HTML shell, metadata, font preconnect |
+| `lib/data/courses.ts` → `CoursesSection` (async function) | Runs the Supabase query; uses `next/headers` cookies |
+| `components/dashboard/HeroTile.tsx` | Pure display, no interactivity |
+| `components/dashboard/CourseGrid.tsx` | Renders a list from props, no event handlers |
+| `components/dashboard/ActivityTile.tsx` | SVG heatmap calculation, no browser APIs |
+| `components/dashboard/StatCard.tsx` | Display only |
+| `components/ui/*` (Skeleton, ErrorState, Badge, GlowCard) | Presentational |
+
+### Client Components (`"use client"`)
+
+| File | Why it needs the browser |
+|---|---|
+| `components/layout/DashboardShell.tsx` | Calls `useSidebar()` hook — needs `useState` |
+| `hooks/useSidebar.ts` | Uses `useState` + `useCallback` |
+| `components/layout/Sidebar.tsx` | Hover states, collapsible animation via Framer Motion |
+| `components/layout/BottomNav.tsx` | Active route highlighting via `usePathname` |
+| `components/dashboard/CourseTile.tsx` | Hover animation via Framer Motion |
+
+**Key principle:** The boundary is pushed as far down the tree as possible. `DashboardShell` is a client component purely because it manages sidebar-collapse state — but its `children` prop (which includes all the dashboard tiles) is still server-rendered HTML passed through, so those children never re-render on the client.
+
+### Supabase Client Instantiation
+
+Two separate helpers exist under `lib/supabase/`:
+
+- **`server.ts`** — `createServerClient` from `@supabase/ssr`. Uses Next.js `cookies()` for auth token propagation. Only imported from RSCs or Route Handlers.
+- **`client.ts`** — `createBrowserClient` from `@supabase/ssr`. Safe to import from Client Components. Currently unused in UI code (reserved for future real-time subscriptions).
+
+This dual-client pattern avoids the most common Supabase/Next.js pitfall: accidentally importing the server client into a Client Component, which would throw a runtime error because `next/headers` is not available in the browser.
+
+### Streaming with Suspense
+
+`CoursesSection` is an `async` Server Component nested inside `<Suspense>` on the dashboard page:
+
+```tsx
+<Suspense fallback={<CourseGridSkeleton count={4} />}>
+  <CoursesSection />   {/* awaits Supabase, streams in when ready */}
+</Suspense>
+```
+
+This means the rest of the page (Hero, Stats, Activity) renders and streams to the browser immediately. The course grid slot shows an animated skeleton and fills in once the DB query resolves — no loading spinners, no client-side fetch waterfalls.
+
+---
+
+## Project Structure
+
+```
+student-dashboard/
+├── app/
+│   ├── layout.tsx          # Root HTML shell, metadata, dark-mode setup
+│   ├── page.tsx            # Dashboard page (RSC, bento grid orchestrator)
+│   ├── globals.css         # Design tokens, bento grid, animations
+│   ├── loading.tsx         # Route-level skeleton (full page)
+│   └── error.tsx           # Route-level error boundary
+├── components/
+│   ├── dashboard/
+│   │   ├── HeroTile.tsx    # Welcome card + streak ring (RSC)
+│   │   ├── StatCard.tsx    # XP / Hours / Rank cards (RSC)
+│   │   ├── StatsRow.tsx    # Stat card row wrapper (RSC)
+│   │   ├── CourseGrid.tsx  # Course card grid (RSC)
+│   │   ├── CourseTile.tsx  # Individual course card (Client — Framer Motion)
+│   │   └── ActivityTile.tsx# GitHub-style heatmap (RSC)
+│   ├── layout/
+│   │   ├── DashboardShell.tsx # Sidebar + content wrapper (Client — useState)
+│   │   ├── Sidebar.tsx     # Desktop nav + collapse (Client — Framer Motion)
+│   │   └── BottomNav.tsx   # Mobile nav bar (Client — usePathname)
+│   └── ui/
+│       ├── Badge.tsx       # Category pill
+│       ├── ErrorState.tsx  # Courses fetch error fallback
+│       ├── GlowCard.tsx    # Reusable glowing card wrapper
+│       ├── Skeleton.tsx    # Loading skeleton components
+│       └── StreakRing.tsx  # SVG progress ring
+├── hooks/
+│   └── useSidebar.ts       # Sidebar open/collapse state
+├── lib/
+│   ├── data/
+│   │   └── courses.ts      # Supabase query + result type
+│   ├── supabase/
+│   │   ├── server.ts       # SSR Supabase client (server-only)
+│   │   └── client.ts       # Browser Supabase client
+│   ├── mock-data.ts        # Static user, courses, activity data
+│   └── utils.ts            # cn(), formatNumber(), daysAgo()
+├── types/
+│   └── index.ts            # Shared TypeScript interfaces
+└── supabase/
+    └── migrations/
+        └── 20260602_create_courses.sql  # Schema + seed data
+```
+
+---
+
+## Database Schema
 
 ```sql
-courses (
-  id               uuid        PK
-  title            text
-  progress         integer     0–100
-  icon_name        text        key in CourseTile's ICON_MAP
-  instructor       text
-  color            text        hex  e.g. "#10b981"
-  category         text
-  total_lessons    integer
-  completed_lessons integer
-  created_at       timestamptz DEFAULT now()
-)
+-- courses table (abbreviated)
+create table courses (
+  id              uuid primary key default gen_random_uuid(),
+  title           text not null,
+  instructor      text not null,
+  progress        integer check (progress between 0 and 100),
+  icon_name       text not null,
+  color           text not null,
+  category        text not null,
+  total_lessons   integer not null,
+  completed_lessons integer not null,
+  created_at      timestamptz default now()
+);
+-- Row-Level Security: anon SELECT only
 ```
 
-**Supported icon_name values**: `Brain`, `Atom`, `Cpu`, `Network`, `Calculator`, `Code`, `BookOpen`, `FlaskConical`, `Globe`, `Layers`, `Lightbulb`, `Music`, `Palette`, `Sigma`, `Terminal`. Unknown names fall back to `BookOpen` — no crash.
+The migration file seeds six sample courses matching the mock data for a consistent demo experience. RLS is enabled with an `anon` select-only policy so the public Supabase anon key is safe to ship in the frontend.
 
 ---
 
-## Running locally
+## Challenges & How They Were Solved
 
-```bash
-npm install
-npm run dev       # http://localhost:3000
+### 1. Keeping the Server/Client Boundary Clean
+
+**Problem:** Framer Motion, `useState`, and `usePathname` are browser-only APIs, but they are needed deep in the component tree (e.g., inside `CourseTile`, which is a child of the server-rendered `CourseGrid`).
+
+**Solution:** Split at the smallest possible boundary. `CourseGrid` (RSC) renders a list and passes each `Course` object as a prop to `CourseTile` (Client). The RSC never uses browser APIs; the Client Component never does async data fetching. RSC-produced children passed as props are treated as already-rendered HTML by React, so they don't hydrate again — only the interactive shell does.
+
+### 2. Supabase Auth Cookie Forwarding in RSCs
+
+**Problem:** `@supabase/ssr`'s server client must read auth cookies to attach the user's JWT to queries, but `next/headers` is async in Next.js 16 (`await cookies()`).
+
+**Solution:** `createClient()` in `lib/supabase/server.ts` is `async` and `await`s `cookies()`. This propagates correctly through the async RSC call chain (`page.tsx` → `CoursesSection` → `getCourses()`) without any middleware.
+
+### 3. Streaming Without Blocking Non-Async Tiles
+
+**Problem:** If course fetching blocks the entire page render, users see nothing until Supabase responds.
+
+**Solution:** Only `CoursesSection` is async; the rest of the page is synchronous. Wrapping only that component in `<Suspense>` means Next.js streams the outer HTML immediately and patches the course grid in when ready. The skeleton uses the same grid dimensions as the real cards to prevent layout shift.
+
+### 4. Seeded Deterministic Mock Activity
+
+**Problem:** A GitHub-style heatmap needs 364 days of data. Random data would change on every render, causing hydration mismatches between server and client.
+
+**Solution:** `generateMockActivity()` uses a linear-congruential PRNG seeded with a fixed constant (`42`). The same sequence is produced on every call — server and client agree without needing `useEffect` or `suppressHydrationWarning`.
+
+### 5. Dark Mode Flash Prevention
+
+**Problem:** Even with Tailwind's dark strategy, browsers can briefly flash a white background before CSS loads.
+
+**Solution:** `color-scheme: dark` is declared in three places simultaneously — as an HTML attribute on `<html>`, as a `<meta>` tag in `<head>`, and in the CSS `:root`. This tells the browser's native form controls, scrollbars, and background to go dark before any stylesheet is parsed.
+
+---
+
+## Environment Variables
+
+```env
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
 ```
 
----
-
-## Deploying to Vercel
-
-1. Push to GitHub.
-2. Import the repo at [vercel.com/new](https://vercel.com/new).
-3. Set two environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Deploy.
-
----
-
-## Animation system
-
-All motion uses Framer Motion spring physics — no `duration` tweening:
-
-| Element | Animation |
-|---|---|
-| Hero tile | `y: 24 → 0` on mount, `y: -2` on hover |
-| Stat cards | Slide in from `x: 20`, staggered 80ms each |
-| Course tiles | `y: 24 → 0`, staggered 70ms each via parent `Variants` |
-| Progress bar | Springs from `width: 0` on first viewport entry (`useInView`) |
-| Sidebar nav | `layoutId="sidebar-active-pill"` moves between active items |
-| Bottom nav | `layoutId="bottom-nav-pill"` same |
-| Heatmap cells | Scale in with 0.6ms inter-cell delay |
-| Tooltip | `AnimatePresence` fade + scale |
-
-All hover effects use `transform` + `box-shadow` only — no layout-triggering properties.
-
-`prefers-reduced-motion` collapses all CSS animations to instant. Framer Motion respects this automatically.
-
----
-
-## Design decisions
-
-**Bento Grid in CSS not JS** — Using `display: grid` with named classes avoids any JS measurement, hydration, or resize observer. Grid dimensions are fixed at parse time — no layout shifts.
-
-**`CoursesResult` discriminated union** — Returning `{ ok, courses }` instead of throwing means the page can cleanly branch between error state and empty state without try/catch in JSX.
-
-**Grain texture via inline SVG** — The `.card-grain::before` pseudo-element uses a base64 SVG noise filter. No network request, no image asset, no CLS.
-
-**`"use client"` boundary at components** — Server Components compose the page and pass plain serialisable props down. Client Components own all interactivity and animation. This keeps the Supabase client strictly server-side.
-
----
-
-## Known gaps / future work
-
-- User profile is mocked; wire up `supabase.auth.getUser()`
-- Activity heatmap uses seeded mock data; add a `study_sessions` table
-- No course pagination; add `.range()` when count grows
-- `icon_name` is free text; a Postgres `CHECK` constraint would prevent typos
+Both variables are prefixed `NEXT_PUBLIC_` so they are available in browser bundles. They are safe to expose because Supabase RLS restricts what the anon key can access.
