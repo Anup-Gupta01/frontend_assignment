@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, ChevronRight, Zap, TrendingUp } from "lucide-react";
 import type { UserProfile } from "@/types";
@@ -25,6 +26,13 @@ const spring = (delay = 0) => ({
 
 export function HeroTile({ user }: HeroTileProps) {
   const firstName = user.name.split(" ")[0];
+
+  // Greeting is time-dependent — compute only on the client to avoid
+  // server/client hydration mismatch (React error #418).
+  const [greeting, setGreeting] = useState("");
+  useEffect(() => {
+    setGreeting(getGreeting());
+  }, []);
 
   return (
     <motion.article
@@ -94,7 +102,7 @@ export function HeroTile({ user }: HeroTileProps) {
               }}
             >
               <Sparkles size={9} aria-hidden="true" />
-              {getGreeting()}
+              {greeting}
             </span>
           </motion.div>
 
